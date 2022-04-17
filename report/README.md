@@ -2,7 +2,7 @@ Programming assignment 4
 ================
 
 **Author**: Gabriela Constantin-Dureci  
-**Date**: Last update: 2022-04-16 23:44:12
+**Date**: Last update: 2022-04-17 02:20:39
 
 # Overview
 
@@ -233,6 +233,35 @@ read_csv(file = "../data/ne02.csv")
     ## # ... with 35 more rows
 
 ``` r
+read_csv(file = "../data/ne03.csv")
+```
+
+    ## Rows: 45 Columns: 5
+    ## -- Column specification --------------------------------------------------------
+    ## Delimiter: ","
+    ## chr (1): fileID
+    ## dbl (3): f1, f2, vot
+    ## lgl (1): notes
+    ## 
+    ## i Use `spec()` to retrieve the full column specification for this data.
+    ## i Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+    ## # A tibble: 45 x 5
+    ##    fileID        f1    f2   vot notes
+    ##    <chr>      <dbl> <dbl> <dbl> <lgl>
+    ##  1 ne03_kaka   794. 1786.  31.9 NA   
+    ##  2 ne03_kaka1  837. 1682.  42.1 NA   
+    ##  3 ne03_kaka2  879. 1549.  50.8 NA   
+    ##  4 ne03_keke   546. 2642.  35.7 NA   
+    ##  5 ne03_keke1  569. 1787.  33.9 NA   
+    ##  6 ne03_keke2  568. 2484.  44.9 NA   
+    ##  7 ne03_kiki   531. 2731.  38.1 NA   
+    ##  8 ne03_kiki1  412. 2012.  81.4 NA   
+    ##  9 ne03_kiki2  373. 2806.  67.2 NA   
+    ## 10 ne03_koko   511. 1071.  53.0 NA   
+    ## # ... with 35 more rows
+
+``` r
 bi01 <- read_csv(here("data", "bi01.csv"))
 ```
 
@@ -302,8 +331,24 @@ ne02 <- read_csv(here("data", "ne02.csv"))
     ## i Specify the column types or set `show_col_types = FALSE` to quiet this message.
 
 ``` r
-data_bi <-rbind(bi01, bi02, bi03)
-data_ne<-rbind(ne01,ne02)
+ne03 <- read_csv(here("data", "ne03.csv"))
+```
+
+    ## Rows: 45 Columns: 5
+    ## -- Column specification --------------------------------------------------------
+    ## Delimiter: ","
+    ## chr (1): fileID
+    ## dbl (3): f1, f2, vot
+    ## lgl (1): notes
+    ## 
+    ## i Use `spec()` to retrieve the full column specification for this data.
+    ## i Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+``` r
+data<-rbind(bi01,bi02,bi03, ne01,ne02, ne03)
+
+bi<-rbind(bi01,bi02,bi03)
+ne<-rbind(ne01,ne02, ne03)
 ```
 
 ## Tidy data
@@ -314,21 +359,33 @@ data_ne<-rbind(ne01,ne02)
 # Create any other relevant variables here 
 
 #Get rid of unnecessary columns
-bi_cleanup<-data_bi%>%
+
+#Overall data
+data_cleanup<-data%>%
    separate(fileID,into = c("id","stim"), sep = 4)%>%
   mutate(word = str_remove(stim,"[_]"))%>%
   mutate(item = str_remove(word, "[1-2]"))
 
-ne_cleanup<-data_ne %>% 
+#Bilingual data
+bi_cleanup<-bi%>%
    separate(fileID,into = c("id","stim"), sep = 4)%>%
   mutate(word = str_remove(stim,"[_]"))%>%
   mutate(item = str_remove(word, "[1-2]"))
+
+#Learner data
+ne_cleanup<-ne%>%
+   separate(fileID,into = c("id","stim"), sep = 4)%>%
+  mutate(word = str_remove(stim,"[_]"))%>%
+  mutate(item = str_remove(word, "[1-2]"))
+
 
 #Select only those columns that are important.
-# Since my hypothesis is about VOT, include only VOT
-bi_vot<-select(bi_cleanup, id, item, vot)
-
-ne_vot<-select(ne_cleanup, id, item, vot)
+#Overall data
+data_total<-select(data_cleanup, id, item, vot, f1, f2)
+#Bilingual data
+bi_total<-select(bi_cleanup, id, item, vot, f1, f2)
+#Learner
+ne_total<-select(ne_cleanup, id, item, vot, f1, f2)
 ```
 
 # Analysis
@@ -339,35 +396,364 @@ ne_vot<-select(ne_cleanup, id, item, vot)
 # Give some descriptive summaries of your data 
 # Display your descriptives in a table (try knitr::kable())
 
-# Mean of the three productions of each items (per individual participant)
-bi_general<- bi_vot %>% 
-  group_by(item, id) %>% 
-  summarize(vot_mean=mean(vot))
-```
+# Overall stats(VOT, f1, f2)
 
-    ## `summarise()` has grouped output by 'item'. You can override using the
-    ## `.groups` argument.
-
-``` r
-#Mean per individual item (combining all participants' productions per item)
-bi_stats2<- bi_vot %>% 
-  group_by(item) %>% 
-  summarize(vot_mean=mean(vot))
-```
-
-``` r
-# Mean per each participant (all items taken together)
-bi_stats1<- bi_vot %>% 
+data_stats<-data_total %>% 
   group_by(id) %>% 
-  summarize(vot_mean=mean(vot)) %>% 
-    knitr::kable (format = "html")
+  summarize(vot_mean=mean(vot), f1_mean=mean(f1), f2_mean= mean(f2))
+
+knitr::kable (data_stats, "html")
 ```
+
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+id
+</th>
+<th style="text-align:right;">
+vot_mean
+</th>
+<th style="text-align:right;">
+f1_mean
+</th>
+<th style="text-align:right;">
+f2_mean
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+bi01
+</td>
+<td style="text-align:right;">
+26.19733
+</td>
+<td style="text-align:right;">
+520.2511
+</td>
+<td style="text-align:right;">
+1727.237
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+bi02
+</td>
+<td style="text-align:right;">
+20.39133
+</td>
+<td style="text-align:right;">
+524.7984
+</td>
+<td style="text-align:right;">
+1587.086
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+bi03
+</td>
+<td style="text-align:right;">
+24.98889
+</td>
+<td style="text-align:right;">
+606.1667
+</td>
+<td style="text-align:right;">
+1732.557
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ne01
+</td>
+<td style="text-align:right;">
+33.71911
+</td>
+<td style="text-align:right;">
+632.8196
+</td>
+<td style="text-align:right;">
+1872.508
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ne02
+</td>
+<td style="text-align:right;">
+39.19311
+</td>
+<td style="text-align:right;">
+578.7964
+</td>
+<td style="text-align:right;">
+1857.839
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ne03
+</td>
+<td style="text-align:right;">
+39.58933
+</td>
+<td style="text-align:right;">
+559.1676
+</td>
+<td style="text-align:right;">
+1617.775
+</td>
+</tr>
+</tbody>
+</table>
+
+``` r
+# Overall stats(VOT)
+
+data_vot<-data_total %>% 
+  group_by(id) %>% 
+  summarize(vot_mean=mean(vot))
+
+knitr::kable (data_vot, "html")
+```
+
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+id
+</th>
+<th style="text-align:right;">
+vot_mean
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+bi01
+</td>
+<td style="text-align:right;">
+26.19733
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+bi02
+</td>
+<td style="text-align:right;">
+20.39133
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+bi03
+</td>
+<td style="text-align:right;">
+24.98889
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ne01
+</td>
+<td style="text-align:right;">
+33.71911
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ne02
+</td>
+<td style="text-align:right;">
+39.19311
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ne03
+</td>
+<td style="text-align:right;">
+39.58933
+</td>
+</tr>
+</tbody>
+</table>
+
+``` r
+# Bilingual Group Statistics (VOT per individual participant)
+
+bi_vot<-bi_total %>% 
+  group_by(id) %>% 
+  summarize(vot_mean=mean(vot))
+
+knitr::kable (bi_vot, "html")
+```
+
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+id
+</th>
+<th style="text-align:right;">
+vot_mean
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+bi01
+</td>
+<td style="text-align:right;">
+26.19733
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+bi02
+</td>
+<td style="text-align:right;">
+20.39133
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+bi03
+</td>
+<td style="text-align:right;">
+24.98889
+</td>
+</tr>
+</tbody>
+</table>
+
+``` r
+# Bilingual Group Statistics (VOT per whole group)
+bi_vot_global<-bi_total %>% 
+  summarize(vot_mean=mean(vot))
+
+knitr::kable (bi_vot_global, "html")
+```
+
+<table>
+<thead>
+<tr>
+<th style="text-align:right;">
+vot_mean
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+23.85919
+</td>
+</tr>
+</tbody>
+</table>
+
+``` r
+# Learner Group Statistics (VOT per individual participant)
+
+ne_vot<-ne_total %>% 
+  group_by(id) %>% 
+  summarize(vot_mean=mean(vot))
+
+knitr::kable (ne_vot, "html")
+```
+
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+id
+</th>
+<th style="text-align:right;">
+vot_mean
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+ne01
+</td>
+<td style="text-align:right;">
+33.71911
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ne02
+</td>
+<td style="text-align:right;">
+39.19311
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ne03
+</td>
+<td style="text-align:right;">
+39.58933
+</td>
+</tr>
+</tbody>
+</table>
+
+``` r
+# Learner Group Statistics (VOT per whole group)
+ne_vot_global<-ne_total %>% 
+  summarize(vot_mean=mean(vot))
+
+knitr::kable (ne_vot_global, "html")
+```
+
+<table>
+<thead>
+<tr>
+<th style="text-align:right;">
+vot_mean
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+37.50052
+</td>
+</tr>
+</tbody>
+</table>
 
 ## Visualization
 
+### Plots
+
 ``` r
 # Include some plots here
+
+data_total %>% 
+  ggplot(.,aes(x=vot, y=item, color=id))+
+  geom_point()
 ```
+
+<img src="README_files/figure-gfm/plots-1.png" width="672" />
+
+``` r
+data_stats %>% 
+  ggplot(.,aes(x=vot_mean, y=id))+
+  geom_point()
+```
+
+<img src="README_files/figure-gfm/plots-2.png" width="672" />
+
+### Praat Images
 
 <!-- 
 Also include a professional looking figure illustrating an example of the acoustics 
@@ -382,6 +768,12 @@ If you need help consider the following sources:
   - Search the internet for HTML code (not recommended, but it works)
   - Check the code from my class presentations (may or may not be helpful)
 -->
+
+![Second production of “keke” by bilingual participant
+3](images/bi03_keke1.png)
+
+![Second production of “keke” by L2 learner participant
+2](images/ne02_keke1.png)
 
 ## Hypothesis test
 
@@ -400,12 +792,152 @@ What did you enjoy? What did you hate? What did you learn?
 What would you do differently?
 -->
 
-Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
-veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
-commodo consequat. Duis aute irure dolor in reprehenderit in voluptate
-velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint
-occaecat cupidatat non proident, sunt in culpa qui officia deserunt
-mollit anim id est laborum.
+The initial hypothesis was: *The L2 learners will have longer VOTs (due
+to influence of the L1, English)*. After analyzing the data,
+specifically the VOT averages for bilingual participants compared to the
+VOT averages for L2 learners, we can see that each individual L2 learner
+had longer VOT than the bilingual participants.
+
+``` r
+knitr::kable (bi_vot, "html")
+```
+
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+id
+</th>
+<th style="text-align:right;">
+vot_mean
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+bi01
+</td>
+<td style="text-align:right;">
+26.19733
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+bi02
+</td>
+<td style="text-align:right;">
+20.39133
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+bi03
+</td>
+<td style="text-align:right;">
+24.98889
+</td>
+</tr>
+</tbody>
+</table>
+
+``` r
+knitr::kable (ne_vot, "html")
+```
+
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+id
+</th>
+<th style="text-align:right;">
+vot_mean
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+ne01
+</td>
+<td style="text-align:right;">
+33.71911
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ne02
+</td>
+<td style="text-align:right;">
+39.19311
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ne03
+</td>
+<td style="text-align:right;">
+39.58933
+</td>
+</tr>
+</tbody>
+</table>
+
+Additionally, taken as a whole, the L2 learner group also had longer VOT
+than the bilingual group.
+
+``` r
+knitr::kable (ne_vot_global, "html")
+```
+
+<table>
+<thead>
+<tr>
+<th style="text-align:right;">
+vot_mean
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+37.50052
+</td>
+</tr>
+</tbody>
+</table>
+
+``` r
+knitr::kable (bi_vot_global, "html")
+```
+
+<table>
+<thead>
+<tr>
+<th style="text-align:right;">
+vot_mean
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+23.85919
+</td>
+</tr>
+</tbody>
+</table>
+
+By comparing these values, the evidence seems to support the initial
+hypothesis. Lastly, a visual inspection of the two images from Praat
+(see above) suggest similar results.
+
+## Reflections
+
+This was definitely the longest programming assignment. It helped to be
+systematic about running the scripts and segmenting data (though it did
+get tedious). I liked that I was able to include the Praat images/
+screenshots (not sure how to call them).
 
 </br></br>

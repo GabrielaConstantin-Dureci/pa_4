@@ -1,12 +1,10 @@
 ---
 title  : 'Programming assignment 4'
-output: html_document
-
+output: github_document
 ---
 
 **Author**: Gabriela Constantin-Dureci  
 **Date**: Last update: `r Sys.time()`
-
 
 # Overview
 
@@ -21,7 +19,7 @@ For this assignment, I first looked at the R project and read each Rmd file to f
 
 ## Hypothesis
 
-Since half of the production data came from L2 Spanish learners (n=3), we can expect that their L1 (English) would affect their production of words that they assumed to be Spanish. Additionally, in terms of VOT, Spanish and English can be characterized differently (i.e., Spanish has short and lead lag, while English has short, long, and lead lag). More commonly, this is expressed under the idea that the VOT for Spanish stops is shorter compared to the longer VOT that English stops have. Therefore, my hypothesis is the following: *The L2 learners will have longer VOTs (due to influence of the L1, English)* 
+Since half of the production data came from L2 Spanish learners (n=3), we can expect that their L1 (English) would affect their production of words that they assumed to be Spanish. Additionally, in terms of VOT, Spanish and English can be characterized differently (i.e., Spanish has short and lead lag, while English has short, long, and lead lag). More commonly, this is expressed under the idea that the VOT for Spanish stops is shorter compared to the longer VOT that English stops have. Therefore, my hypothesis is the following: *The L2 learners will have longer VOTs (due to influence of the L1, English)*
 
 # Prep
 
@@ -52,16 +50,21 @@ read_csv(file = "../data/bi02.csv")
 read_csv(file = "../data/bi03.csv")
 read_csv(file = "../data/ne01.csv")
 read_csv(file = "../data/ne02.csv")
+read_csv(file = "../data/ne03.csv")
 
 bi01 <- read_csv(here("data", "bi01.csv"))
 bi02 <- read_csv(here("data", "bi02.csv"))
 bi03 <- read_csv(here("data", "bi03.csv"))
 ne01 <- read_csv(here("data", "ne01.csv"))
 ne02 <- read_csv(here("data", "ne02.csv"))
+ne03 <- read_csv(here("data", "ne03.csv"))
 
-data_bi <-rbind(bi01, bi02, bi03)
-data_ne<-rbind(ne01,ne02)
-``` 
+data<-rbind(bi01,bi02,bi03, ne01,ne02, ne03)
+
+bi<-rbind(bi01,bi02,bi03)
+ne<-rbind(ne01,ne02, ne03)
+
+```
 
 ## Tidy data
 
@@ -72,21 +75,33 @@ data_ne<-rbind(ne01,ne02)
 # Create any other relevant variables here 
 
 #Get rid of unnecessary columns
-bi_cleanup<-data_bi%>%
+
+#Overall data
+data_cleanup<-data%>%
    separate(fileID,into = c("id","stim"), sep = 4)%>%
   mutate(word = str_remove(stim,"[_]"))%>%
   mutate(item = str_remove(word, "[1-2]"))
 
-ne_cleanup<-data_ne %>% 
+#Bilingual data
+bi_cleanup<-bi%>%
    separate(fileID,into = c("id","stim"), sep = 4)%>%
   mutate(word = str_remove(stim,"[_]"))%>%
   mutate(item = str_remove(word, "[1-2]"))
+
+#Learner data
+ne_cleanup<-ne%>%
+   separate(fileID,into = c("id","stim"), sep = 4)%>%
+  mutate(word = str_remove(stim,"[_]"))%>%
+  mutate(item = str_remove(word, "[1-2]"))
+
 
 #Select only those columns that are important.
-# Since my hypothesis is about VOT, include only VOT
-bi_vot<-select(bi_cleanup, id, item, vot)
-
-ne_vot<-select(ne_cleanup, id, item, vot)
+#Overall data
+data_total<-select(data_cleanup, id, item, vot, f1, f2)
+#Bilingual data
+bi_total<-select(bi_cleanup, id, item, vot, f1, f2)
+#Learner
+ne_total<-select(ne_cleanup, id, item, vot, f1, f2)
 
 ```
 
@@ -99,35 +114,73 @@ ne_vot<-select(ne_cleanup, id, item, vot)
 # Give some descriptive summaries of your data 
 # Display your descriptives in a table (try knitr::kable())
 
-# Mean of the three productions of each items (per individual participant)
-bi_general<- bi_vot %>% 
-  group_by(item, id) %>% 
-  summarize(vot_mean=mean(vot))
+# Overall stats(VOT, f1, f2)
 
-#Mean per individual item (combining all participants' productions per item)
-bi_stats2<- bi_vot %>% 
-  group_by(item) %>% 
-  summarize(vot_mean=mean(vot))
-```
-
-```{r}
-# Mean per each participant (all items taken together)
-bi_stats1<- bi_vot %>% 
+data_stats<-data_total %>% 
   group_by(id) %>% 
-  summarize(vot_mean=mean(vot)) %>% 
-    knitr::kable (format = "html")
+  summarize(vot_mean=mean(vot), f1_mean=mean(f1), f2_mean= mean(f2))
+
+knitr::kable (data_stats, "html")
+
+# Overall stats(VOT)
+
+data_vot<-data_total %>% 
+  group_by(id) %>% 
+  summarize(vot_mean=mean(vot))
+
+knitr::kable (data_vot, "html")
+
+
+# Bilingual Group Statistics (VOT per individual participant)
+
+bi_vot<-bi_total %>% 
+  group_by(id) %>% 
+  summarize(vot_mean=mean(vot))
+
+knitr::kable (bi_vot, "html")
+
+# Bilingual Group Statistics (VOT per whole group)
+bi_vot_global<-bi_total %>% 
+  summarize(vot_mean=mean(vot))
+
+knitr::kable (bi_vot_global, "html")
+
+# Learner Group Statistics (VOT per individual participant)
+
+ne_vot<-ne_total %>% 
+  group_by(id) %>% 
+  summarize(vot_mean=mean(vot))
+
+knitr::kable (ne_vot, "html")
+
+# Learner Group Statistics (VOT per whole group)
+ne_vot_global<-ne_total %>% 
+  summarize(vot_mean=mean(vot))
+
+knitr::kable (ne_vot_global, "html")
 
 ```
+
 
 ## Visualization
 
+### Plots
 ```{r}
 #| label: plots 
 #| fig.retina: 2
 # Include some plots here
 
+data_total %>% 
+  ggplot(.,aes(x=vot, y=item, color=id))+
+  geom_point()
+
+data_stats %>% 
+  ggplot(.,aes(x=vot_mean, y=id))+
+  geom_point()
+
 ```
 
+### Praat Images
 <!-- 
 Also include a professional looking figure illustrating an example of the acoustics 
 of the production data, i.e., a plot generated in praat.
@@ -142,14 +195,19 @@ If you need help consider the following sources:
   - Check the code from my class presentations (may or may not be helpful)
 -->
 
+![Second production of "keke" by bilingual participant 3](images/bi03_keke1.png)
+
+![Second production of "keke" by L2 learner participant 2 ](images/ne02_keke1.png)
+
 ## Hypothesis test
 
 ```{r}
 #| label: stats
 # Conduct a simple statistical analysis here (optional)
 
-```
 
+
+```
 
 # Conclusion
 
@@ -162,11 +220,29 @@ What did you enjoy? What did you hate? What did you learn?
 What would you do differently?
 -->
 
-Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
-quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
-cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
-proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+The initial hypothesis was: *The L2 learners will have longer VOTs (due to influence of the L1, English)*. After analyzing the data, specifically the VOT averages for bilingual participants compared to the VOT averages for L2 learners, we can see that each individual L2 learner had longer VOT than the bilingual participants.
+```{r}
+knitr::kable (bi_vot, "html")
+```
+```{r}
+knitr::kable (ne_vot, "html")
+```
+
+Additionally, taken as a whole, the L2 learner group also had longer VOT than the bilingual group.
+
+```{r}
+knitr::kable (ne_vot_global, "html")
+```
+
+```{r}
+knitr::kable (bi_vot_global, "html")
+```
+
+By comparing these values, the evidence seems to support the initial hypothesis. Lastly, a visual inspection of the two images from Praat (see above) suggest similar results.
+
+## Reflections
+
+This was definitely the longest programming assignment. It helped to be systematic about running the scripts and segmenting data (though it did get tedious). I liked that I was able to include the Praat images/ screenshots (not sure how to call them).
+
 
 </br></br>
