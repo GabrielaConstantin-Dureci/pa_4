@@ -1,10 +1,10 @@
 ---
 title  : 'Programming assignment 4'
-output: github_document
+output: html_document
 
 ---
 
-**Author**: Your name here  
+**Author**: Gabriela Constantin-Dureci  
 **Date**: Last update: `r Sys.time()`
 
 
@@ -15,24 +15,26 @@ output: github_document
   Describe your hypotheses
 -->
 
-Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
-quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
-cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
-proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+## What did I do?
 
+For this assignment, I first looked at the R project and read each Rmd file to figure out where it would be best to start. I looked at the scripts and the example recordings (i.e., bi01). The first script was not broken, so there was nothing to be fixed, but I had to keep in mind to run it first (before the other two scripts). The second script had some missing information; I just had to add the participant ID (i.e., bi02) and also replace "XXXX" with "45" (i.e., the total number of recordings per participant). (I hope I did this well!) After running the second script, I got the textgrids for each recording. (I did, however, have to run the second script individually for each participant, so I wonder if there is a way (that I might have missed) to create a loop to run it automatically for various participants). Then, I manually segmented the data for each participant (THIS TOOK A WHILE!). Then, for each participant, I ran the third script to extract the data (I forgot to say that I first fixed the script; I added the corresponding participant ID and removed a superfluous pound sign that had gotten lost in there.) After running the thrid script, the .csv files were created for each participant.
+
+## Hypothesis
+
+Since half of the production data came from L2 Spanish learners (n=3), we can expect that their L1 (English) would affect their production of words that they assumed to be Spanish. Additionally, in terms of VOT, Spanish and English can be characterized differently (i.e., Spanish has short and lead lag, while English has short, long, and lead lag). More commonly, this is expressed under the idea that the VOT for Spanish stops is shorter compared to the longer VOT that English stops have. Therefore, my hypothesis is the following: *The L2 learners will have longer VOTs (due to influence of the L1, English)* 
 
 # Prep
 
 ## Libraries
 
 ```{r}
-#| label: load-libs
-#| echo: false 
-#| warning: false 
-#| message: false
-# Load libraries here
+library("dplyr")   
+library("ggplot2") 
+library("readr")   
+library("here")    
+library("tidyr")
+library("stringr")
+library("knitr")
 
 ```
 
@@ -43,7 +45,23 @@ proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 # You need to get all the files in the 'data' directory and combine them
 # Check previous examples we did in class 
 
-```
+here("data")
+
+read_csv(file = "../data/bi01.csv")
+read_csv(file = "../data/bi02.csv")
+read_csv(file = "../data/bi03.csv")
+read_csv(file = "../data/ne01.csv")
+read_csv(file = "../data/ne02.csv")
+
+bi01 <- read_csv(here("data", "bi01.csv"))
+bi02 <- read_csv(here("data", "bi02.csv"))
+bi03 <- read_csv(here("data", "bi03.csv"))
+ne01 <- read_csv(here("data", "ne01.csv"))
+ne02 <- read_csv(here("data", "ne02.csv"))
+
+data_bi <-rbind(bi01, bi02, bi03)
+data_ne<-rbind(ne01,ne02)
+``` 
 
 ## Tidy data
 
@@ -52,6 +70,23 @@ proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 # Convert from long to wide or wide to long format as necessary (check 
 # examples from class)
 # Create any other relevant variables here 
+
+#Get rid of unnecessary columns
+bi_cleanup<-data_bi%>%
+   separate(fileID,into = c("id","stim"), sep = 4)%>%
+  mutate(word = str_remove(stim,"[_]"))%>%
+  mutate(item = str_remove(word, "[1-2]"))
+
+ne_cleanup<-data_ne %>% 
+   separate(fileID,into = c("id","stim"), sep = 4)%>%
+  mutate(word = str_remove(stim,"[_]"))%>%
+  mutate(item = str_remove(word, "[1-2]"))
+
+#Select only those columns that are important.
+# Since my hypothesis is about VOT, include only VOT
+bi_vot<-select(bi_cleanup, id, item, vot)
+
+ne_vot<-select(ne_cleanup, id, item, vot)
 
 ```
 
@@ -63,6 +98,24 @@ proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 #| label: descriptive-stats
 # Give some descriptive summaries of your data 
 # Display your descriptives in a table (try knitr::kable())
+
+# Mean of the three productions of each items (per individual participant)
+bi_general<- bi_vot %>% 
+  group_by(item, id) %>% 
+  summarize(vot_mean=mean(vot))
+
+#Mean per individual item (combining all participants' productions per item)
+bi_stats2<- bi_vot %>% 
+  group_by(item) %>% 
+  summarize(vot_mean=mean(vot))
+```
+
+```{r}
+# Mean per each participant (all items taken together)
+bi_stats1<- bi_vot %>% 
+  group_by(id) %>% 
+  summarize(vot_mean=mean(vot)) %>% 
+    knitr::kable (format = "html")
 
 ```
 
